@@ -1,18 +1,74 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>My Cloud Project</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cloud Feedback System</title>
   <style>
-    body { font-family: Arial; text-align: center; background: #eef3f9; padding: 40px; }
-    h1 { color: #1a4f8b; }
-    .box { background: white; max-width: 500px; margin: auto; padding: 20px; border-radius: 10px; }
+    body { font-family: Arial; background: #eef3f9; padding: 30px; }
+    .box { background: white; max-width: 500px; margin: auto; padding: 25px; border-radius: 10px; }
+    h1 { color: #1a4f8b; text-align: center; }
+    .sub { text-align: center; color: #555; font-size: 14px; }
+    input, textarea { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; }
+    button { background: #1a4f8b; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+    li { margin-bottom: 8px; }
   </style>
 </head>
 <body>
   <div class="box">
-    <h1>Hello, I'm Zeel</h1>
-    <p>Student at CVM University</p>
-    <p>This website is hosted on the cloud using GitHub Pages.</p>
+    <h1>Cloud Feedback System</h1>
+    <p class="sub">Hosted on GitHub Pages | Data stored in Firebase Firestore</p>
+    <input id="name" placeholder="Your name">
+    <textarea id="message" rows="4" placeholder="Your feedback"></textarea>
+    <button id="send">Submit</button>
+    <p id="status"></p>
+    <h3>Recent feedback</h3>
+    <ul id="list"></ul>
   </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC0uVG_bJWvVrulCE5VmRXNzWMOlt_3Pu0",
+      authDomain: "cloud-based-feedback-sys-14ff0.firebaseapp.com",
+      projectId: "cloud-based-feedback-sys-14ff0",
+      storageBucket: "cloud-based-feedback-sys-14ff0.firebasestorage.app",
+      messagingSenderId: "950717967937",
+      appId: "1:950717967937:web:337c3b7a7c8f88cf00e0c0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const status = document.getElementById("status");
+
+    document.getElementById("send").addEventListener("click", async () => {
+      const name = document.getElementById("name").value.trim();
+      const message = document.getElementById("message").value.trim();
+      if (!name || !message) { status.textContent = "Please fill both fields."; return; }
+      try {
+        await addDoc(collection(db, "feedback"), { name, message, time: serverTimestamp() });
+        status.textContent = "Saved to cloud database!";
+        document.getElementById("name").value = "";
+        document.getElementById("message").value = "";
+      } catch (e) {
+        status.textContent = "Error: " + e.message;
+      }
+    });
+
+    const q = query(collection(db, "feedback"), orderBy("time", "desc"), limit(10));
+    onSnapshot(q, (snap) => {
+      const list = document.getElementById("list");
+      list.innerHTML = "";
+      snap.forEach((doc) => {
+        const d = doc.data();
+        const li = document.createElement("li");
+        li.textContent = d.name + ": " + d.message;
+        list.appendChild(li);
+      });
+    });
+  </script>
 </body>
 </html>
